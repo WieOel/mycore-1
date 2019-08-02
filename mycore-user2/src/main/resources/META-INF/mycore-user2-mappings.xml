@@ -1,3 +1,4 @@
 <entity-mappings>
   <entity class="org.mycore.user2.MCRUser" />
+  <entity class="org.mycore.user2.MCRUserAttributeInt" />
 </entity-mappings>

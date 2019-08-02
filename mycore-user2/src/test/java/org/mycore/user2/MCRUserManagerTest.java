@@ -51,7 +51,7 @@ public class MCRUserManagerTest extends MCRUserTestCase {
         user = new MCRUser("junit");
         user.setRealName("Test Case");
         user.setPassword("test");
-        user.getAttributes().put("junit", "test");
+        user.getAttributes().add(new MCRUserAttributeInt("junit", "test"));
         MCRUserManager.createUser(user);
     }
 
@@ -70,13 +70,13 @@ public class MCRUserManagerTest extends MCRUserTestCase {
     public final void testGetUsersByProperty() {
         MCRUser user2 = new MCRUser("junit2");
         user2.setRealName("Test Case II");
-        user2.getAttributes().put("junit", "foo");
-        user2.getAttributes().put("bar", "test");
+        user2.getAttributes().add(new MCRUserAttributeInt("junit", "foo"));
+        user2.getAttributes().add(new MCRUserAttributeInt("bar", "test"));
         MCRUserManager.createUser(user2);
         MCRUser user3 = new MCRUser("junit3");
         user3.setRealName("Test Case III");
-        user3.getAttributes().put("junit", "foo");
-        user3.getAttributes().put("bar", "test failed");
+        user3.getAttributes().add(new MCRUserAttributeInt("junit", "foo"));
+        user3.getAttributes().add(new MCRUserAttributeInt("bar", "test failed"));
         MCRUserManager.createUser(user3);
         startNewTransaction();
         assertEquals(1, MCRUserManager.getUsers("junit", "test").count());
@@ -88,8 +88,8 @@ public class MCRUserManagerTest extends MCRUserTestCase {
     public final void testGetUserPropertiesAfterGetUsers() {
         MCRUser user = new MCRUser("john");
         user.setRealName("John Doe");
-        user.getAttributes().put("id_orcid", "1234-5678-1234-0000");
-        user.getAttributes().put("id_scopus", "87654321");
+        user.getAttributes().add(new MCRUserAttributeInt("id_orcid", "1234-5678-1234-0000"));
+        user.getAttributes().add(new MCRUserAttributeInt("id_scopus", "87654321"));
         assertEquals(2, user.getAttributes().size());
 
         MCRUserManager.createUser(user);
@@ -218,8 +218,8 @@ public class MCRUserManagerTest extends MCRUserTestCase {
         this.user.getSystemRoleIDs().add("editor");
         this.user.setLastLogin(new Date());
         this.user.setRealName("Test Case");
-        this.user.getAttributes().put("tel", "555 4812");
-        this.user.getAttributes().put("street", "Heidestraße 12");
+        this.user.getAttributes().add(new MCRUserAttributeInt("tel", "555 4812"));
+        this.user.getAttributes().add(new MCRUserAttributeInt("street", "Heidestraße 12"));
         this.user.setOwner(this.user);
         MCRUserManager.updateUser(this.user);
         startNewTransaction();

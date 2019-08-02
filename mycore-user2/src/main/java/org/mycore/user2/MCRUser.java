@@ -23,17 +23,14 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Map;
-import java.util.Map.Entry;
+import java.util.List;
 import java.util.stream.Collectors;
 
 import javax.persistence.Access;
 import javax.persistence.AccessType;
-import javax.persistence.CollectionTable;
+import javax.persistence.CascadeType;
 import javax.persistence.Column;
-import javax.persistence.ElementCollection;
 import javax.persistence.Entity;
 import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
@@ -44,9 +41,9 @@ import javax.persistence.Id;
 import javax.persistence.Index;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
-import javax.persistence.MapKeyColumn;
 import javax.persistence.NamedQueries;
 import javax.persistence.NamedQuery;
+import javax.persistence.OneToMany;
 import javax.persistence.Table;
 import javax.persistence.Transient;
 import javax.persistence.UniqueConstraint;
@@ -80,8 +77,9 @@ import org.mycore.user2.utils.MCRUserNameConverter;
 @Entity
 @Access(AccessType.PROPERTY)
 @Table(name = "MCRUser", uniqueConstraints = @UniqueConstraint(columnNames = { "userName", "realmID" }))
+// TODO: indexes
 @NamedQueries(@NamedQuery(name = "MCRUser.byPropertyValue",
-    query = "SELECT u FROM MCRUser u JOIN FETCH u.attributes ua WHERE KEY(ua) = :name  AND :value IN (VALUE(ua))"))
+    query = "SELECT u FROM MCRUser u JOIN FETCH u.attributes ua WHERE ua.name = :name AND ua.value = :value"))
 // TODO use @Cacheable instead
 @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
 @XmlRootElement(name = "user")
@@ -137,7 +135,7 @@ public class MCRUser implements MCRUserInformation, Cloneable, Serializable {
     /**
      *
      */
-    private Map<String, String> attributes;
+    private List<MCRUserAttributeInt> attributes;
 
     @Transient
     private Collection<String> systemRoles;
@@ -170,7 +168,7 @@ public class MCRUser implements MCRUserInformation, Cloneable, Serializable {
         this.realmID = realmID;
         this.systemRoles = new HashSet<>();
         this.externalRoles = new HashSet<>();
-        this.attributes = new HashMap<>();
+        this.attributes = new ArrayList<>();
         this.password = new Password();
     }
 
@@ -523,6 +521,7 @@ public class MCRUser implements MCRUserInformation, Cloneable, Serializable {
      * This methods handles {@link MCRUserInformation#ATT_REAL_NAME} and
      * all attributes defined in {@link #getAttributes()}.
      */
+
     @Override
     public String getUserAttribute(String attribute) {
         switch (attribute) {
@@ -531,7 +530,14 @@ public class MCRUser implements MCRUserInformation, Cloneable, Serializable {
             case MCRUserInformation.ATT_EMAIL:
                 return getEMailAddress();
             default:
-                return getAttributes().get(attribute);
+                String retValue = null;
+                for (MCRUserAttributeInt attr : attributes) {
+                    if(attr.name.equals(attribute)) {
+                        retValue = attr.value;
+                        break;
+                    }
+                }
+                return retValue;
         }
     }
 
@@ -547,21 +553,16 @@ public class MCRUser implements MCRUserInformation, Cloneable, Serializable {
     /**
      * @return the attributes
      */
-    @ElementCollection(fetch = FetchType.EAGER)
-    @CollectionTable(name = "MCRUserAttr",
-        joinColumns = @JoinColumn(name = "id"),
-        indexes = { @Index(name = "MCRUserAttributes", columnList = "name, value"),
-            @Index(name = "MCRUserValues", columnList = "value") })
-    @MapKeyColumn(name = "name", length = 128)
-    @Column(name = "value", length = 255)
-    public Map<String, String> getAttributes() {
+    @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.EAGER)
+    @JoinColumn(name = "user_id", nullable = false)
+    public List<MCRUserAttributeInt> getAttributes() {
         return attributes;
     }
 
     /**
      * @param attributes the attributes to set
      */
-    public void setAttributes(Map<String, String> attributes) {
+    public void setAttributes(List<MCRUserAttributeInt> attributes) {
         this.attributes = attributes;
     }
 
@@ -751,10 +752,10 @@ public class MCRUser implements MCRUserInformation, Cloneable, Serializable {
             return null;
         }
         ArrayList<MapEntry> list = new ArrayList<>(attributes.size());
-        for (Entry<String, String> entry : attributes.entrySet()) {
+        for (MCRUserAttributeInt attribute : attributes) {
             MapEntry mapEntry = new MapEntry();
-            mapEntry.name = entry.getKey();
-            mapEntry.value = entry.getValue();
+            mapEntry.name = attribute.getName();
+            mapEntry.value = attribute.getValue();
             list.add(mapEntry);
         }
         return list.toArray(new MapEntry[list.size()]);
@@ -763,7 +764,7 @@ public class MCRUser implements MCRUserInformation, Cloneable, Serializable {
     @SuppressWarnings("unused")
     private void setAttributesMap(MapEntry[] entries) {
         for (MapEntry entry : entries) {
-            attributes.put(entry.name, entry.value);
+            attributes.add(new MCRUserAttributeInt(entry.name, entry.value));
         }
     }
 
@@ -846,14 +847,14 @@ public class MCRUser implements MCRUserInformation, Cloneable, Serializable {
             copy.password = new Password();
             copy.password.hint = getHint();
         }
-        copy.setAttributes(new HashMap<>());
+        copy.setAttributes(new ArrayList<>());
         copy.eMail = this.eMail;
         copy.lastLogin = this.lastLogin;
         copy.validUntil = this.validUntil;
         copy.realName = this.realName;
         copy.systemRoles.addAll(this.systemRoles);
         copy.externalRoles.addAll(this.externalRoles);
-        copy.attributes.putAll(this.attributes);
+        copy.attributes.addAll(this.attributes);
         return copy;
     }
 }

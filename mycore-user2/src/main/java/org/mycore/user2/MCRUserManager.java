@@ -130,10 +130,17 @@ public class MCRUserManager {
         TypedQuery<MCRUser> propertyQuery = em.createNamedQuery("MCRUser.byPropertyValue", MCRUser.class);
         propertyQuery.setParameter("name", attrName);
         propertyQuery.setParameter("value", attrValue);
-        return propertyQuery.getResultList()
-            .stream()
-            .filter(u -> u.getAttributes().get(attrName).equals(attrValue))
-            .peek(em::refresh); //fixes MCR-1885
+
+        List<MCRUser> users = new ArrayList<>();
+        for (MCRUser user : propertyQuery.getResultList()) {
+            for(MCRUserAttributeInt attr : user.getAttributes()) {
+                if(attr.name.equals(attrName) && attr.value.equals(attrValue)) {
+                    users.add(user);
+                    em.refresh(user); //fixes MCR-1885
+                }
+            }
+        }
+        return users.stream();
     }
 
     private static MCRUser setRoles(MCRUser mcrUser) {

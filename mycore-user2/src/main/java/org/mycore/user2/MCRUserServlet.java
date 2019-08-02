@@ -377,7 +377,7 @@ public class MCRUserServlet extends MCRServlet {
             for (Element attribute : attributeList) {
                 String key = attribute.getAttributeValue("name");
                 String value = attribute.getAttributeValue("value");
-                user.getAttributes().put(key, value);
+                user.getAttributes().add(new MCRUserAttributeInt(name, value));
             }
         }
     }
