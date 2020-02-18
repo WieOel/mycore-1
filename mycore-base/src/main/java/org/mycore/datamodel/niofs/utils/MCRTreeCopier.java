@@ -18,8 +18,12 @@
 
 package org.mycore.datamodel.niofs.utils;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.mycore.common.MCRSession;
+import org.mycore.common.MCRSessionMgr;
+
 import java.io.IOException;
-import java.io.OutputStream;
 import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.FileSystemLoopException;
 import java.nio.file.FileVisitResult;
@@ -28,14 +32,8 @@ import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
-import java.nio.file.attribute.BasicFileAttributeView;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.nio.file.attribute.FileTime;
-
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-import org.mycore.common.MCRSession;
-import org.mycore.common.MCRSessionMgr;
 
 /**
  * Simple {@link FileVisitor} that recursive copies a directory
